@@ -293,7 +293,7 @@ def remove_mean_cutoffs_healthy(df, cutoff = 1, plotting = True):
     
     return results_df
 
-def get_healthy2_gene_list(healthy2_results_df):
+def get_healthy2_gene_list(healthy2_results_df, ensembl2gene):
     '''
     health2_results_df: DataFrame
         DataFrame containing gene expression values of healthy tissues, tissue site should
