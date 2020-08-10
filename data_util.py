@@ -5,6 +5,8 @@ from matplotlib import pyplot as plt
 import gseapy as gp
 import math
 from scipy.stats import ttest_ind
+import time
+import pickle as pkl
 
 # Breast         - 'BCRA'
 # Head-neck      - 'HNSC'
@@ -308,3 +310,36 @@ def get_healthy2_gene_list(healthy2_results_df):
             missing_id_list.append(ensembl_id)    
     
     return healthy2_gene_list, missing_id_list
+
+def get_healthy_tissue_gene_exp_df(sample_attr_DS_path,gtex_tcga_path,tissue_str):
+    '''
+    Inputs:
+        sample_attr_DS_path: path to a file that looks like 'GTEx_Analysis_v8_Annotations_SampleAttributesDS.txt'
+        gtex_tcga_path: path to a file that looks like 'D:\Downloads\TcgaTargetGtex_RSEM_isoform_fpkm\TcgaTargetGtex_RSEM_isoform_fpkm'
+    Output:
+        gtex_tcga_df: data frame with different genes as rows, and different samples as columns
+    
+    '''
+    
+    #Read in attributes file. This file contains a map from Sample ID to Tissue type of sample. 
+    #We read in two columns only, SAMPID (Sample ID) and SMTS
+    attributesDS_df = pd.read_csv(sample_attr_DS_path,delimiter='\t',usecols=['SAMPID','SMTS'])
+
+    ids_and_tissue_type_df = attributesDS_df[attributesDS_df['SMTS']==tissue_str]
+    sample_ids_to_use = ids_and_tissue_type_df['SAMPID'].values # contains all the sample ids that we are looking for
+    
+    #We'll append 'sample' to the columns to look for, so that cols_to_read contains the name of all the columns to read
+    #from the GTEX+TCGA combined file.
+    cols_to_read = np.append(np.array(['sample']),sample_ids_to_use)
+    #Not all of the GTEX samples are present in the GTEX+TCGA combined file, so we need to find a set intersection between 
+    #the SampleIds present in the sample_attr file and the gtex_tcga file
+    gtex_tcga_header = pd.read_csv(gtex_tcga_path,delimiter='\t',nrows=1)
+    cols_to_read = np.intersect1d(cols_to_read,gtex_tcga_header.columns)
+    
+    #Now, we'll read the the TCGA+GTEX file for the gene expression of only the specific samples we need.
+    print("starting, this takes a while")
+    start_time = time.time()
+    gtex_tcga_df = pd.read_csv(gtex_tcga_path,delimiter='\t',usecols=cols_to_read)
+    print('time elapsed:', time.time() - start_time)
+    
+    return gtex_tcga_df
