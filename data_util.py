@@ -1,12 +1,14 @@
 import numpy as np
 import pandas as pd
 import re
+
 from matplotlib import pyplot as plt
 import gseapy as gp
 import math
 from scipy.stats import ttest_ind
 import time
 import pickle as pkl
+from sklearn import preprocessing
 
 # Breast         - 'BCRA'
 # Head-neck      - 'HNSC'
@@ -217,10 +219,10 @@ def setup_gene_name_dict(filepath):
         Filepath to csv containing mapping from ensembl id to gene name
         
     ensembl2gene: Dict
-        Dictionary that takes in an ensembl ID and returns the gene name
+        Dictionary that takes in an ensembl ID and returns its gene name
         
     gene2ensembl: Dict
-        Dictionary that takes in a gene name and returns the ensembl ID 
+        Dictionary that takes in a gene name and returns its ensembl ID 
     '''
     names_full_df = pd.read_csv(filepath)
     ensembl_id_series = names_full_df['ensembl_gene_id']
@@ -240,7 +242,7 @@ def run_enrichr(gene_list, gene_sets):
         List containing genes names used for the analysis
     
     gene_sets: List
-        List of strings of enrichr gene libaries to use
+        List of enrichr gene libaries to use
     
     enr: Enrichr object
         Analysis output, use "enr.results" to print table of results
