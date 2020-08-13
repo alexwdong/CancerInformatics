@@ -6,6 +6,10 @@ import numpy as np
 import pandas as pd
 import pickle as pkl
 
+from networkx.algorithms.community.kclique import k_clique_communities
+from networkx import Graph, find_cliques
+
+
 from data_util import run_enrichr
 
 def elbow_method(gene_array_norm, verbose = True, plotting = True):
@@ -84,7 +88,7 @@ def run_km(cluster_count_list, gene_list, gene_array_norm, gene_array, gene2idx,
         Array of gene expression data, normalized
         
     gene_array: Numpy Array
-        Array of gene expression data
+        Array of gene expression data (only used for plotting)
         
     gene2idx: Dict
         Dictionary that maps each gene to an index - used to reorder genes so that clusters show up together in
@@ -132,6 +136,73 @@ def run_km(cluster_count_list, gene_list, gene_array_norm, gene_array, gene2idx,
         km_list.append(km2)
             
     return km_list
+
+
+def run_kclique_communities(k_count_list, gene_list, gene_array_norm, gene_array, gene2idx,correlation_cutoff=.8, verbose=True, plotting=False):
+    '''
+    This function runs K-means various times on the normalized gene data and returns a list of corresponding models
+    Note that model selection is determined manually by visually inspecting the covariance matrix of the data when
+    sorted by cluster
+    
+    k_count_list: List
+        List containing the values of K to be used in k-clique communities method
+        
+    gene_list: Numpy Array
+        Array of gene names to be clustered
+    
+    gene_array_norm: Numpy Array
+        Array of gene expression data, normalized
+        
+    gene_array: Numpy Array
+        Array of gene expression data (only used for plotting)
+        
+    gene2idx: Dict
+        Dictionary that maps each gene to an index - used to reorder genes so that clusters show up together in
+        the covariance matrix
+    correlation_cutoff: float (range [-1,1])
+        This variable controls which graph edges are created if the correlation is above the cutoff.
+    verbose: Boolean
+        Prints the genes in each cluster when True
+    
+    plotting: Boolean
+        Plots the covariance matrix with entries reordered based on cluster when True
+        
+    kclique_communities_list: List
+        List of stored K-clique communities results
+    '''
+    kclique_communities_list = []
+    corr = np.corrcoef(gene_array_norm)
+    corr_filtered = (corr > correlation_cutoff)
+    gene_network = Graph(corr_filtered)
+    if verbose is True:
+        print('num_edges',gene_network.number_of_edges())
+        print('num_nodes',gene_network.number_of_nodes())
+        
+    for k in k_count_list:
+        gene_clusters = k_clique_communities(gene_network,k,find_cliques(gene_network))
+        clusters_list = list(gene_clusters)
+        
+        cluster2gene_dict={}
+        gene_indices_by_clust=[]
+        for ii,cluster in enumerate(clusters_list):
+            genes_in_cluster = gene_list[list(cluster)]
+            cluster2gene_dict[ii] = genes_in_cluster
+            gene_indices_by_clust.extend(list(cluster))
+        if plotting == True:
+        
+            plt.figure(figsize=(10,5))
+            df = np.corrcoef(gene_array.T[gene_indices_by_clust])
+            plt.matshow(df, fignum=1,vmin=-1, vmax=1)
+            plt.colorbar()
+            plt.title("Correlation Plot for k = " +str(k) +' w/ corr cutoff '+ str(correlation_cutoff))
+            plt.show()
+        if verbose:
+            print(k)
+            print(cluster2gene_dict)
+        kclique_communities_list.append(cluster2gene_dict)
+            
+    return kclique_communities_list
+
 
 def get_cluster_dict(cluster_count, gene_list, km_list, best_km_idx, filepath, save_file = True):
 
