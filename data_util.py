@@ -172,7 +172,7 @@ def get_healthy_genes(filepath):
     
     return healthy_trunc_df
 
-def differential_gene_expression_analysis(df, healthy_trunc_df):
+def differential_gene_expression_analysis(df, healthy_trunc_df, p_cutoff = 0.01):
     '''
     This function takes in two DataFrames - one containing gene expression values of cancerous
     tissue and the other containing values of healthy tissue and performs differential gene
@@ -186,13 +186,6 @@ def differential_gene_expression_analysis(df, healthy_trunc_df):
     healthy_trunc_df: DataFrame
         DataFrame containing gene expression values of healthy tissue, with each gene
         name truncated to remove version number    
-        
-    gene_list: List
-        List of genes with significant p-values
-        
-    mean_ge_list: List
-        List of the mean values of cancerous tissue, healthy tissue, and difference in
-        means
     '''
     genes_c_trunc = df.columns
     genes_h_trunc = healthy_trunc_df.columns
@@ -207,7 +200,7 @@ def differential_gene_expression_analysis(df, healthy_trunc_df):
         h_mean = healthy_trunc_df[gene].mean()
         c_mean = df[gene].mean()
 
-        if p < 0.01 and c_mean > h_mean:
+        if p < p_cutoff and c_mean > h_mean:
             gene_list.append(gene)
             mean_ge_list.append((c_mean, h_mean,c_mean-h_mean))
     
