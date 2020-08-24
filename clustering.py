@@ -105,7 +105,7 @@ def run_km(cluster_count_list, gene_list, gene_array_norm, gene_array, gene2idx,
     '''
     km_list = []
 
-    for cluster_count in cluster_count_list:
+    for attempt_idx, cluster_count in enumerate(cluster_count_list):
     
         km2 = KMeans(n_clusters=cluster_count,init='random').fit(gene_array_norm)
 
@@ -124,13 +124,14 @@ def run_km(cluster_count_list, gene_list, gene_array_norm, gene_array, gene2idx,
         gene_index_idx = [gene2idx[gene] for gene in gene_index_km]
         
         if plotting == True:
-        
+            
             plt.figure(figsize=(10,5))
             df = np.corrcoef(gene_array.T[gene_index_idx])
             plt.matshow(df, fignum=1)
             # plt.xticks(range(len(df.columns)), df.columns)
             # plt.yticks(range(len(df.columns)), df.columns)
             plt.colorbar()
+            plt.title('Attempt Index: {}'.format(attempt_idx))
             plt.show()
             
         km_list.append(km2)
@@ -196,6 +197,7 @@ def run_kclique_communities(k_count_list, gene_list, gene_array_norm, gene_array
             plt.colorbar()
             plt.title("Correlation Plot for k = " +str(k) +' w/ corr cutoff '+ str(correlation_cutoff))
             plt.show()
+            
         if verbose:
             print(k)
             print(cluster2gene_dict)
